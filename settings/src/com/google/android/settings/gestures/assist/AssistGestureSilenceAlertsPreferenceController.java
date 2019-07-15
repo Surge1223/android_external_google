@@ -9,6 +9,7 @@ import com.android.settings.overlay.FeatureFactory;
 import android.content.Context;
 import com.android.settings.gestures.AssistGestureFeatureProvider;
 import com.android.settings.gestures.GesturePreferenceController;
+import com.android.settings.R;
 
 public class AssistGestureSilenceAlertsPreferenceController extends GesturePreferenceController
 {
@@ -26,7 +27,7 @@ public class AssistGestureSilenceAlertsPreferenceController extends GesturePrefe
         if (((AssistGestureFeatureProviderGoogleImpl)this.mFeatureProvider).isDeskClockSupported(this.mContext)) {
             final Preference preference = preferenceScreen.findPreference("gesture_assist_silence");
             if (preference != null) {
-                preference.setSummary(2131886433);
+                preference.setSummary(R.string.assist_gesture_setting_enable_ring_alarm_silence_text);
             }
         }
         super.displayPreference(preferenceScreen);

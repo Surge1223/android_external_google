@@ -1,24 +1,36 @@
 package com.google.android.settings.gestures.assist;
 
-import android.widget.Button;
+
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.view.View;
+import android.widget.Button;
 import com.android.settings.SetupWizardUtils;
 import android.content.Context;
 import android.content.Intent;
-import com.android.setupwizardlib.util.WizardManagerHelper;
 import android.view.View.OnClickListener;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.RadioButton;
+import android.widget.Toast;
+import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
+import com.android.setupwizardlib.util.WizardManagerHelper;
+import com.google.android.settings.gestures.assist.AssistGestureTrainingEnrollingActivity;
+import com.android.settings.R;
 
-public class AssistGestureTrainingIntroActivity extends AssistGestureTrainingBase implements View.OnClickListener
-{
+import java.util.Objects;
+
+public class AssistGestureTrainingIntroActivity extends AssistGestureTrainingBase
+        implements View.OnClickListener {
     private static final String FROM_ACCIDENTAL_TRIGGER_CLASS;
-    
+
     static {
         FROM_ACCIDENTAL_TRIGGER_CLASS = AssistGestureTrainingIntroActivity.class.getName();
     }
-    
+
     private String getFlowType() {
-        final Intent intent = this.getIntent();
+        final Intent intent = getIntent();
         if (WizardManagerHelper.isSetupWizardIntent(intent)) {
             return "setup";
         }
@@ -33,67 +45,75 @@ public class AssistGestureTrainingIntroActivity extends AssistGestureTrainingBas
         }
         return null;
     }
-    
+
+
     private void startEnrollingActivity() {
-        final Intent intent = new Intent((Context)this, (Class)AssistGestureTrainingEnrollingActivity.class);
-        intent.putExtra("launched_from", this.getFlowType());
-        SetupWizardUtils.copySetupExtras(this.getIntent(), intent);
-        this.startActivityForResult(intent, 1);
+        final Intent intent = new Intent(this, AssistGestureTrainingEnrollingActivity.class);
+        intent.putExtra("launched_from", getFlowType());
+        SetupWizardUtils.copySetupExtras(getIntent(), intent);
+        startActivityForResult(intent, 1);
     }
-    
+
+    @Override
     public int getMetricsCategory() {
-        return 991;
+        return MetricsEvent.SETTINGS_ASSIST_GESTURE_TRAINING_INTRO;
     }
-    
+
     protected void onActivityResult(final int n, final int n2, final Intent intent) {
         super.onActivityResult(n, n2, intent);
         if (n == 1 && n2 != 0) {
-            this.setResult(n2, intent);
-            this.finishAndRemoveTask();
+            setResult(n2, intent);
+            finishAndRemoveTask();
         }
     }
-    
-    public void onClick(final View view) {
-        switch (view.getId()) {
-            case 16908314: {
-                this.startEnrollingActivity();
-                break;
-            }
-            case 16908313: {
-                if ("accidental_trigger".contentEquals(this.getFlowType())) {
-                    this.launchAssistGestureSettings();
-                    break;
-                }
-                this.setResult(101);
-                this.finishAndRemoveTask();
-                break;
-            }
-        }
+
+    protected int getContentView() {
+        return R.layout.assist_gesture_training_intro_activity;
     }
-    
+
     @Override
-    protected void onCreate(final Bundle bundle) {
-        this.setTheme(SetupWizardUtils.getTheme(this.getIntent()));
+    protected void onCreate(@Nullable final Bundle bundle) {
+        setTheme(SetupWizardUtils.getTheme(getIntent()));
+        setContentView(getContentView());
         super.onCreate(bundle);
-        this.setContentView(2131558461);
-        ((Button)this.findViewById(16908314)).setOnClickListener((View.OnClickListener)this);
-        final Button button = (Button)this.findViewById(16908313);
-        button.setOnClickListener((View.OnClickListener)this);
-        if ("accidental_trigger".contentEquals(this.getFlowType())) {
-            button.setText(2131886430);
+        Button button1 = findViewById(android.R.id.button1);
+        button1.setOnClickListener(this);
+        Button button2 = findViewById(android.R.id.button2);
+        button2.setOnClickListener(this);
+        if ("accidental_trigger".contentEquals(getFlowType())) {
+            button2.setText(R.string.assist_gesture_enrollment_settings);
         }
         else {
-            button.setText(2131886427);
+            button1.setText(R.string.assist_gesture_enrollment_do_it_later);
         }
     }
-    
+
     public void onGestureDetected() {
-        this.clearIndicators();
-        this.startEnrollingActivity();
+        clearIndicators();
+        startEnrollingActivity();
     }
-    
+
     @Override
     public void onGestureProgress(final float n, final int n2) {
         super.onGestureProgress(n, n2);
     }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case android.R.id.button1:
+                startEnrollingActivity();
+                break;
+
+            case android.R.id.button2:
+                if ("accidental_trigger".contentEquals(Objects.requireNonNull(getFlowType()))) {
+                    launchAssistGestureSettings();
+                    break;
+                }
+                setResult(101);
+                finishAndRemoveTask();
+                break;
+        }
+    }
 }
+

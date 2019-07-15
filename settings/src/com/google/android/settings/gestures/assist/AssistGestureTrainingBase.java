@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.view.ContextThemeWrapper;
 import android.view.WindowManager;
@@ -13,8 +14,11 @@ import android.view.ViewGroup;
 import com.android.settings.gestures.AssistGestureFeatureProvider;
 import com.android.settings.overlay.FeatureFactory;
 import com.android.settings.core.InstrumentedActivity;
+import com.android.settings.R;
 
-public abstract class AssistGestureTrainingBase extends InstrumentedActivity implements AssistGestureHelper.GestureListener {
+import static com.google.android.settings.gestures.assist.AssistGestureHelper.*;
+
+public abstract class AssistGestureTrainingBase extends InstrumentedActivity implements GestureListener {
 
     protected AssistGestureHelper mAssistGestureHelper;
     private AssistGestureIndicatorView mIndicatorView;
@@ -80,9 +84,20 @@ public abstract class AssistGestureTrainingBase extends InstrumentedActivity imp
 
     public void onResume() {
         super.onResume();
+        Settings.Secure.putInt(getContentResolver(), "assist_gesture_enabled", 1);
         boolean assistEnabled = Settings.Secure.getInt(getContentResolver(), "assist_gesture_enabled", 1) != 0;
         AssistGestureFeatureProvider assistGestureFeatureProvider = FeatureFactory.getFactory(this).getAssistGestureFeatureProvider();
         mWindowManager.addView(mIndicatorView, mIndicatorView.getLayoutParams(getWindow().getAttributes()));
+        if (!FeatureFactory.getFactory(this).getAssistGestureFeatureProvider().isSupported(this)) {
+            setResult(1);
+            finishAndRemoveTask();
+            return;
+        } else if (!assistEnabled) {
+            Log.e("AssistGestureTrainingBase", "Unable to start activity ");
+            setResult(1);
+            finishAndRemoveTask();
+            return;
+        }
         mAssistGestureHelper.bindToElmyraServiceProxy();
         mAssistGestureHelper.setListener(this);
         if (assistGestureFeatureProvider.isSupported(this) && assistEnabled) {
@@ -144,3 +159,4 @@ public abstract class AssistGestureTrainingBase extends InstrumentedActivity imp
         }
     }
 }
+

@@ -6,11 +6,10 @@ import com.android.settings.search.SearchFeatureProviderImpl;
 
 public class SearchFeatureProviderGoogleImpl extends SearchFeatureProviderImpl
 {
-    @Override
     public String getSettingsIntelligencePkgName() {
         return "com.google.android.settings.intelligence";
     }
-    
+
     @Override
     protected boolean isSignatureWhitelisted(final Context context, final String s) {
         return SignatureVerifier.isPackageWhitelisted(context, s);

@@ -1,10 +1,14 @@
 package com.google.android.settings.dashboard.suggestions;
 
-import android.provider.Settings;
-import com.android.settings.overlay.FeatureFactory;
 import android.content.ComponentName;
 import android.content.Context;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
+import android.util.Log;
+
 import com.android.settings.dashboard.suggestions.SuggestionFeatureProviderImpl;
+import com.android.settings.overlay.FeatureFactory;
 
 public class SuggestionFeatureProviderGoogleImpl extends SuggestionFeatureProviderImpl
 {
@@ -15,11 +19,10 @@ public class SuggestionFeatureProviderGoogleImpl extends SuggestionFeatureProvid
         super(context);
     }
     
-    @Override
     public ComponentName getSuggestionServiceComponent() {
         return new ComponentName("com.google.android.settings.intelligence", "com.google.android.settings.intelligence.modules.suggestions.SuggestionService");
     }
-    
+
     @Override
     public boolean isSuggestionComplete(final Context context, final ComponentName componentName) {
         if (componentName.getClassName().equals("com.google.android.settings.gestures.AssistGestureSuggestion")) {

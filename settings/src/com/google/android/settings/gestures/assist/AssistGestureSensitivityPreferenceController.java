@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -39,16 +40,16 @@ public class AssistGestureSensitivityPreferenceController extends AbstractPrefer
         LifecycleObserver,
         OnPause,
         OnResume {
-    private final AssistGestureFeatureProvider mFeatureProvider;
-    private final GestureListener mGestureListener = new C10281();
-    private final SettingObserver mSettingObserver;
-    private final UserManager mUserManager;
+    private AssistGestureFeatureProvider mFeatureProvider;
+    private GestureListener mGestureListener = new C10281();
+    private SettingObserver mSettingObserver;
+    private UserManager mUserManager;
     private AssistGestureHelper mAssistGestureHelper;
     private EnforcedAdmin mFunDisallowedAdmin;
     private boolean mFunDisallowedBySystem;
     private long[] mHits = new long[3];
     private SeekBarPreference mPreference;
-    private final Handler mHandler =
+    private Handler mHandler =
             new Handler(Looper.getMainLooper()) {
                 public void handleMessage(Message message) {
                     switch (message.what) {
@@ -64,10 +65,10 @@ public class AssistGestureSensitivityPreferenceController extends AbstractPrefer
 
     public AssistGestureSensitivityPreferenceController(Context context, Lifecycle lifecycle) {
         super(context);
-        this.mFeatureProvider = FeatureFactory.getFactory(context).getAssistGestureFeatureProvider();
-        this.mSettingObserver = new SettingObserver();
-        this.mAssistGestureHelper = new AssistGestureHelper(context);
-        this.mUserManager = (UserManager) context.getSystemService(Context.USER_SERVICE);
+        mFeatureProvider = FeatureFactory.getFactory(context).getAssistGestureFeatureProvider();
+        mSettingObserver = new SettingObserver();
+        mAssistGestureHelper = new AssistGestureHelper(context);
+        mUserManager = (UserManager) context.getSystemService(Context.USER_SERVICE);
         if (lifecycle != null) {
             lifecycle.addObserver(this);
         }
@@ -83,7 +84,7 @@ public class AssistGestureSensitivityPreferenceController extends AbstractPrefer
 
     public static int getMaxSensitivityResourceInteger(Context context) {
         int maximum;
-         maximum = context.getResources().getInteger(R.integer.gesture_assist_sensitivity_max);
+        maximum = context.getResources().getInteger(R.integer.gesture_assist_sensitivity_max);
         return maximum;
     }
 
@@ -104,49 +105,53 @@ public class AssistGestureSensitivityPreferenceController extends AbstractPrefer
         return assistGestureFeatureProvider.isSensorAvailable(context);
     }
 
-    private void updateGestureListenerState(boolean mWasListening) {
-        if (mWasListening == this.mWasListening) {
+    private void updateGestureListenerState(boolean mWasListening) throws RemoteException {
+        if (mWasListening == mWasListening) {
             return;
         }
         if (mWasListening) {
-            this.mAssistGestureHelper.setListener(this.mGestureListener);
+            mAssistGestureHelper.setListener(mGestureListener);
         } else {
-            this.mAssistGestureHelper.setListener(null);
+            mAssistGestureHelper.setListener(null);
         }
-        this.mWasListening = mWasListening;
+        mWasListening = mWasListening;
     }
 
     private void updatePreference() {
-        if (this.mPreference != null) {
-            this.mPreference.setProgress(getSensitivityInt(this.mContext));
+        if (mPreference != null) {
+            mPreference.setProgress(getSensitivityInt(mContext));
             boolean z =
-                    Secure.getInt(this.mContext.getContentResolver(), "assist_gesture_enabled", 1) != 0;
+                    Secure.getInt(mContext.getContentResolver(), "assist_gesture_enabled", 1) != 0;
             boolean z2 =
                     Secure.getInt(
-                            this.mContext.getContentResolver(), "assist_gesture_silence_alerts_enabled", 1)
+                            mContext.getContentResolver(), "assist_gesture_silence_alerts_enabled", 1)
                             != 0;
-            if (this.mFeatureProvider.isSupported(this.mContext) && (z || z2)) {
-                this.mPreference.setEnabled(true);
-            } else if (this.mFeatureProvider.isSensorAvailable(this.mContext) && z2) {
-                this.mPreference.setEnabled(true);
+            if (mFeatureProvider.isSupported(mContext) && (z || z2)) {
+                mPreference.setEnabled(true);
+            } else if (mFeatureProvider.isSensorAvailable(mContext) && z2) {
+                mPreference.setEnabled(true);
             } else {
-                this.mPreference.setEnabled(false);
+                mPreference.setEnabled(false);
             }
-            if (z && this.mFeatureProvider.isSupported(this.mContext)) {
+            if (z && mFeatureProvider.isSupported(mContext)) {
                 z2 = true;
             }
-            updateGestureListenerState(z2);
+            try {
+                updateGestureListenerState(z2);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     @Override
-    public void displayPreference(final PreferenceScreen preferenceScreen) {
-        this.mPreference = (SeekBarPreference)preferenceScreen.findPreference(this.getPreferenceKey());
-        if (!this.mFeatureProvider.isSupported(this.mContext)) {
-            this.setVisible(preferenceScreen, "gesture_assist_video", false);
+    public void displayPreference(PreferenceScreen preferenceScreen) {
+        mPreference = (SeekBarPreference)preferenceScreen.findPreference(getPreferenceKey());
+        if (!mFeatureProvider.isSupported(mContext)) {
+            setVisible(preferenceScreen, "gesture_assist_video", false);
         }
         else {
-            this.setVisible(preferenceScreen, "gesture_assist_video_silence", false);
+            setVisible(preferenceScreen, "gesture_assist_video_silence", false);
         }
         super.displayPreference(preferenceScreen);
     }
@@ -159,15 +164,15 @@ public class AssistGestureSensitivityPreferenceController extends AbstractPrefer
         if (!TextUtils.equals(preference.getKey(), "gesture_assist_sensitivity")) {
             return false;
         }
-        System.arraycopy(this.mHits, 1, this.mHits, 0, this.mHits.length - 1);
-        this.mHits[this.mHits.length - 1] = SystemClock.uptimeMillis();
-        if (this.mHits[0] < SystemClock.uptimeMillis() - 500) {
+        System.arraycopy(mHits, 1, mHits, 0, mHits.length - 1);
+        mHits[mHits.length - 1] = SystemClock.uptimeMillis();
+        if (mHits[0] < SystemClock.uptimeMillis() - 500) {
             return false;
         }
-        if (!this.mUserManager.hasUserRestriction("no_fun")) {
-            Intent intent = new Intent(this.mContext, AssistGestureBubbleActivity.class);
+        if (!mUserManager.hasUserRestriction("no_fun")) {
+            Intent intent = new Intent(mContext, AssistGestureBubbleActivity.class);
             try {
-                this.mContext.startActivity(intent);
+                mContext.startActivity(intent);
                 return true;
             } catch (Exception e) {
                 Log.e(
@@ -175,46 +180,50 @@ public class AssistGestureSensitivityPreferenceController extends AbstractPrefer
                         "Unable to start activity " + intent.toString());
                 return false;
             }
-        } else if (this.mFunDisallowedAdmin == null) {
+        } else if (mFunDisallowedAdmin == null) {
             return false;
         } else {
             RestrictedLockUtils.sendShowAdminSupportDetailsIntent(
-                    this.mContext, this.mFunDisallowedAdmin);
+                    mContext, mFunDisallowedAdmin);
             return false;
         }
     }
 
     public boolean isSliceable() {
-        return TextUtils.equals((CharSequence)this.getPreferenceKey(), (CharSequence)"gesture_assist_sensitivity");
+        return TextUtils.equals((CharSequence)getPreferenceKey(), (CharSequence)"gesture_assist_sensitivity");
     }
 
     public boolean isAvailable() {
-        return isAvailable(this.mContext, this.mFeatureProvider);
+        return isAvailable(mContext, mFeatureProvider);
     }
 
     public void onPause() {
-        updateGestureListenerState(false);
-        this.mAssistGestureHelper.unbindFromElmyraServiceProxy();
-        this.mSettingObserver.unregister();
+        try {
+            updateGestureListenerState(false);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        mAssistGestureHelper.unbindFromElmyraServiceProxy();
+        mSettingObserver.unregister();
     }
 
     public boolean onPreferenceChange(Preference preference, Object obj) {
         Secure.putFloat(
-                this.mContext.getContentResolver(),
+                mContext.getContentResolver(),
                 "assist_gesture_sensitivity",
-                convertSensitivityIntToFloat(this.mContext, ((Integer) obj).intValue()));
+                convertSensitivityIntToFloat(mContext, ((Integer) obj).intValue()));
         return true;
     }
 
     public void onResume() {
-        this.mAssistGestureHelper.bindToElmyraServiceProxy();
-        this.mSettingObserver.register();
+        mAssistGestureHelper.bindToElmyraServiceProxy();
+        mSettingObserver.register();
         updatePreference();
-        this.mFunDisallowedAdmin =
+        mFunDisallowedAdmin =
                 RestrictedLockUtils.checkIfRestrictionEnforced(
-                        this.mContext, "no_fun", UserHandle.myUserId());
-        this.mFunDisallowedBySystem =
-                RestrictedLockUtils.hasBaseUserRestriction(this.mContext, "no_fun", UserHandle.myUserId());
+                        mContext, "no_fun", UserHandle.myUserId());
+        mFunDisallowedBySystem =
+                RestrictedLockUtils.hasBaseUserRestriction(mContext, "no_fun", UserHandle.myUserId());
     }
 
     public void updateState(Preference preference) {
@@ -233,10 +242,10 @@ public class AssistGestureSensitivityPreferenceController extends AbstractPrefer
     }
 
     class SettingObserver extends ContentObserver {
-        private final Uri ASSIST_GESTURE_ENABLED_URI = Secure.getUriFor("assist_gesture_enabled");
-        private final Uri ASSIST_GESTURE_SENSITIVITY_URI =
+        private Uri ASSIST_GESTURE_ENABLED_URI = Secure.getUriFor("assist_gesture_enabled");
+        private Uri ASSIST_GESTURE_SENSITIVITY_URI =
                 Secure.getUriFor("assist_gesture_sensitivity");
-        private final Uri ASSIST_GESTURE_SILENCE_PHONE_ENABLED_URI =
+        private Uri ASSIST_GESTURE_SILENCE_PHONE_ENABLED_URI =
                 Secure.getUriFor("assist_gesture_silence_alerts_enabled");
 
         SettingObserver() {
@@ -250,10 +259,10 @@ public class AssistGestureSensitivityPreferenceController extends AbstractPrefer
         public void register() {
             ContentResolver contentResolver =
                     AssistGestureSensitivityPreferenceController.this.mContext.getContentResolver();
-            contentResolver.registerContentObserver(this.ASSIST_GESTURE_ENABLED_URI, false, this);
+            contentResolver.registerContentObserver(ASSIST_GESTURE_ENABLED_URI, false, this);
             contentResolver.registerContentObserver(
-                    this.ASSIST_GESTURE_SILENCE_PHONE_ENABLED_URI, false, this);
-            contentResolver.registerContentObserver(this.ASSIST_GESTURE_SENSITIVITY_URI, false, this);
+                    ASSIST_GESTURE_SILENCE_PHONE_ENABLED_URI, false, this);
+            contentResolver.registerContentObserver(ASSIST_GESTURE_SENSITIVITY_URI, false, this);
         }
 
         public void unregister() {
@@ -264,3 +273,4 @@ public class AssistGestureSensitivityPreferenceController extends AbstractPrefer
         }
     }
 }
+
