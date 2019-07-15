@@ -23,7 +23,7 @@ import com.android.settings.gestures.AssistGestureFeatureProvider;
 
 import static android.os.Binder.getCallingPid;
 import static android.os.Binder.getCallingUid;
-
+import com.android.settings.R;
 
 public class AssistGestureHelper {
 
@@ -69,7 +69,7 @@ public class AssistGestureHelper {
                     mGestureListener.onGestureProgress(n, mLastStage);
                 }
                 if (mLastStage != 2 && mLastStage == 2) {
-           //         mPowerManager.userActivity(SystemClock.uptimeMillis(), 0, 0);
+                    mPowerManager.userActivity(SystemClock.uptimeMillis(), 0, 0);
                 }
                 mLastStage = mLastStage;
             }

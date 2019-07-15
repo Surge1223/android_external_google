@@ -14,6 +14,7 @@ import android.net.Uri.Builder;
 import android.net.Uri;
 import android.content.Context;
 import com.android.settings.fuelgauge.PowerUsageFeatureProviderImpl;
+import com.android.settings.R;
 
 public  class PowerUsageFeatureProviderGoogleImpl extends PowerUsageFeatureProviderImpl
 {
@@ -32,7 +33,15 @@ public  class PowerUsageFeatureProviderGoogleImpl extends PowerUsageFeatureProvi
 
     private  boolean TURBO_ENABLED = true;
     static  String TIMESTAMP_COL = "timestamp_millis";
+    protected PackageManager mPackageManager;
+    protected Context mContext;
 
+    public PowerUsageFeatureProviderGoogleImpl(Context context) {
+        super(context);
+        mPackageManager = context.getPackageManager();
+        mContext = context.getApplicationContext();
+    }
+    
     private static void closeResource( Throwable t,  AutoCloseable autoCloseable) {
         if (t != null) {
             try {
@@ -40,17 +49,13 @@ public  class PowerUsageFeatureProviderGoogleImpl extends PowerUsageFeatureProvi
             } catch (Throwable t2) {
                 t.addSuppressed(t2);
             }
-		}
+        }
     }
 
     static {
         PACKAGES_SERVICE = new String[] { "com.google.android.gms", "com.google.android.apps.gcs" };
     }
-
-    public PowerUsageFeatureProviderGoogleImpl( Context context) {
-        super(context);
-    }
-
+    
     private Uri getEnhancedBatteryPredictionCurveUri() {
         return new Uri.Builder().scheme("content").authority("com.google.android.apps.turbo.estimated_time_remaining").appendPath("discharge_curve").build();
     }
@@ -61,20 +66,23 @@ public  class PowerUsageFeatureProviderGoogleImpl extends PowerUsageFeatureProvi
 
     @Override
     public String getAdvancedUsageScreenInfoString() {
-        return this.mContext.getString(2131886272);
+        return mContext.getString(R.string.advanced_battery_graph_subtext);
     }
 
     @Override
-    public boolean getEarlyWarningSignal(Context context,  String s) {
-         Uri.Builder appendPath = new Uri.Builder().scheme("content").authority("com.google.android.apps.turbo.estimated_time_remaining").appendPath("early_warning").appendPath("id");
-        if (TextUtils.isEmpty((CharSequence)s)) {
-            appendPath.appendPath(context.getPackageName());
+    public boolean getEarlyWarningSignal(Context context,  String id) {
+        Uri.Builder builder = new Uri.Builder().scheme("content")
+                .authority("com.google.android.apps.turbo.estimated_time_remaining")
+                .appendPath("early_warning")
+                .appendPath("id");
+        if (TextUtils.isEmpty(id)) {
+            builder.appendPath(context.getPackageName());
+        } else {
+            builder.appendPath(id);
         }
-        else {
-            appendPath.appendPath(s);
-        }
-         Cursor query = context.getContentResolver().query(appendPath.build(), (String[])null, (String)null, (String[])null, (String)null);
-         Context context2 = null;
+
+        Cursor query = context.getContentResolver().query(builder.build(), (String[])null, (String)null, (String[])null, (String)null);
+        Context context2 = null;
         boolean b = false;
         if (query != null) {
             context = context2;
@@ -82,7 +90,7 @@ public  class PowerUsageFeatureProviderGoogleImpl extends PowerUsageFeatureProvi
                 try {
                     if (query.moveToFirst()) {
                         context = context2;
-                        if (1 == query.getInt(query.getColumnIndex("is_early_warning"))) {
+                        if (query.getInt(query.getColumnIndex(IS_EARLY_WARNING_COL)) == 1) {
                             b = true;
                         }
                         if (query != null) {
@@ -91,47 +99,47 @@ public  class PowerUsageFeatureProviderGoogleImpl extends PowerUsageFeatureProvi
                         return b;
                     }
                 }
+
                 finally {
                     if (query != null) {
                         closeResource(null, query);
                     }
                 }
             }
-            catch (Throwable t) {}
+            catch (Throwable t) {
+
+            }
         }
-        if (query != null) {
-            closeResource(null, (AutoCloseable)query);
-        }
-        return false;
+        return b;
     }
 
     @Override
     public Estimate getEnhancedBatteryPrediction(Context context) {
-         Cursor query = context.getContentResolver().query(this.getEnhancedBatteryPredictionUri(), (String[])null, (String)null, (String[])null, (String)null);
-         Context context2 = null;
+        Cursor query = context.getContentResolver().query(getEnhancedBatteryPredictionUri(), (String[])null, (String)null, (String[])null, (String)null);
+        Context context2 = null;
         if (query != null) {
             context = context2;
             try {
                 try {
                     if (query.moveToFirst()) {
                         context = context2;
-                         int columnIndex = query.getColumnIndex("is_based_on_usage");
+                        int columnIndex = query.getColumnIndex("is_based_on_usage");
                         boolean b = true;
                         if (columnIndex != -1) {
                             context = context2;
-                             int int1 = query.getInt(columnIndex);
+                            int int1 = query.getInt(columnIndex);
                             b = true;
                             if (int1 == 0) {
                                 b = false;
                             }
                         }
                         context = context2;
-                         int columnIndex2 = query.getColumnIndex("average_battery_life");
+                        int columnIndex2 = query.getColumnIndex("average_battery_life");
                         long roundTimeToNearestThreshold = 0L;
                         Label_0182: {
                             if (columnIndex2 != -1) {
                                 context = context2;
-                                 long long1 = query.getLong(columnIndex2);
+                                long long1 = query.getLong(columnIndex2);
                                 if (long1 != -1L) {
                                     context = context2;
                                     long n = Duration.ofMinutes(15L).toMillis();
@@ -148,45 +156,40 @@ public  class PowerUsageFeatureProviderGoogleImpl extends PowerUsageFeatureProvi
                             roundTimeToNearestThreshold = -1L;
                         }
                         context = context2;
-                         Estimate estimate = new Estimate(query.getLong(query.getColumnIndex("battery_estimate")), b, roundTimeToNearestThreshold);
+                        Estimate estimate = new Estimate(query.getLong(query.getColumnIndex("battery_estimate")), b, roundTimeToNearestThreshold);
                         if (query != null) {
                             closeResource(null, query);
                         }
                         return estimate;
                     }
-            } catch (Throwable t) {
-                if (query != null) {
-                    closeResource(t, query);
+                } catch (Throwable t) {
+                    if (query != null) {
+                        closeResource(t, query);
+                    }
+                    return null;
                 }
+            } catch (NullPointerException e) {
                 return null;
             }
-        } catch (NullPointerException e) {
-            return null;
         }
-       }
-       return null;
+        return null;
     }
 
     @Override
     public SparseIntArray getEnhancedBatteryPredictionCurve( Context context,  long n) {
-         Uri enhancedBatteryPredictionCurveUri = this.getEnhancedBatteryPredictionCurveUri();
+        Uri enhancedBatteryPredictionCurveUri = getEnhancedBatteryPredictionCurveUri();
         try {
-             Cursor query = context.getContentResolver().query(enhancedBatteryPredictionCurveUri, (String[])null, (String)null, (String[])null, (String)null);
+            Cursor query = context.getContentResolver().query(enhancedBatteryPredictionCurveUri, (String[])null, (String)null, (String[])null, (String)null);
             if (query == null) {
-                if (query != null) {
                     closeResource(null, (AutoCloseable)query);
-                }
                 return null;
             }
             try {
-                 int columnIndex = query.getColumnIndex("timestamp_millis");
-                 int columnIndex2 = query.getColumnIndex("battery_level");
-                 SparseIntArray sparseIntArray = new SparseIntArray(query.getCount());
+                int columnIndex = query.getColumnIndex("timestamp_millis");
+                int columnIndex2 = query.getColumnIndex("battery_level");
+                SparseIntArray sparseIntArray = new SparseIntArray(query.getCount());
                 while (query.moveToNext()) {
                     sparseIntArray.append((int)(query.getLong(columnIndex) - n), query.getInt(columnIndex2));
-                }
-                if (query != null) {
-                    closeResource(null, (AutoCloseable)query);
                 }
                 closeResource(null, query);
                 return sparseIntArray;
@@ -201,39 +204,48 @@ public  class PowerUsageFeatureProviderGoogleImpl extends PowerUsageFeatureProvi
         }
     }
 
-
-
     @Override
-    public String getEnhancedEstimateDebugString( String s) {
-        return this.mContext.getString(2131888611, new Object[] { s });
+    public String getEnhancedEstimateDebugString( String timeRemaining) {
+        return mContext.getString(R.string.power_usage_level_and_status, new Object[] { timeRemaining });
     }
 
     @Override
-    public String getOldEstimateDebugString( String s) {
-        return this.mContext.getString(2131888615, new Object[] { s });
+    public String getOldEstimateDebugString( String timeRemaining) {
+        return mContext.getString(R.string.power_usage_summary, new Object[] {
+                timeRemaining 
+        });
     }
 
     @Override
-    public boolean isEnhancedBatteryPredictionEnabled( Context context) {
-         if (TURBO_ENABLED) {
-            return TURBO_ENABLED;
+    public boolean isEnhancedBatteryPredictionEnabled(Context context) {
+        if (TURBO_ENABLED) {
+            try {
+                boolean turboEnabled = mPackageManager.getPackageInfo("com.google.android.apps.turbo",
+                        PackageManager.MATCH_DISABLED_COMPONENTS).applicationInfo.enabled;
+                return turboEnabled;
+            }
+            catch (PackageManager.NameNotFoundException nameNotFoundException) {
+                return false;
+            }
         }
-        try {
-            return this.mPackageManager.getPackageInfo("com.google.android.apps.turbo", 512).applicationInfo.enabled;
-        }
-        catch (PackageManager.NameNotFoundException ex) {
-            return false;
-        }
+        return false;
     }
 
     @Override
     public boolean isEstimateDebugEnabled() {
-        return Gservices.getBoolean(this.mContext.getContentResolver(), "settingsgoogle:battery_estimate_debugging_enabled", false);
-    }
+        return mContext.getResources().getBoolean(R.bool.battery_estimate_debugging_enabled);
+        }
+
+        @Override
+        public boolean isSmartBatterySupported() {
+            return mContext.getResources().getBoolean(
+                    com.android.internal.R.bool.config_smart_battery_available);
+        }
+        
 
     @Override
     public boolean isTypeService( BatterySipper batterySipper) {
-         String[] packagesForUid = this.mPackageManager.getPackagesForUid(batterySipper.getUid());
+        String[] packagesForUid = mPackageManager.getPackagesForUid(batterySipper.getUid());
         if (packagesForUid == null) {
             return false;
         }
@@ -244,8 +256,6 @@ public  class PowerUsageFeatureProviderGoogleImpl extends PowerUsageFeatureProvi
         }
         return false;
     }
-
-    void setPackageManager( PackageManager mPackageManager) {
-        this.mPackageManager = mPackageManager;
-    }
 }
+
+

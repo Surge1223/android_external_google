@@ -38,7 +38,7 @@ public class AssistGestureFeatureProviderGoogleImpl extends AssistGestureFeature
         if (Settings.Secure.getIntForUser(contentResolver, "systemui.google.opa_enabled", 0, -2) != 0) {
             b = true;
         }
-        return b;
+        return true;
     }
 
     public static boolean isOpaEnabled(final Context context) {

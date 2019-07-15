@@ -13,6 +13,7 @@ import com.android.internal.annotations.VisibleForTesting;
 import com.android.settingslib.core.lifecycle.events.OnResume;
 import com.android.settingslib.core.lifecycle.LifecycleObserver;
 import com.android.settings.gestures.GesturePreferenceController;
+import com.android.settings.R;
 
 public class AssistGesturePreferenceController extends GesturePreferenceController implements LifecycleObserver, OnResume
 {

@@ -17,6 +17,7 @@ import com.android.settingslib.core.lifecycle.events.OnResume;
 import com.android.settingslib.core.lifecycle.events.OnPause;
 import com.android.settingslib.core.lifecycle.LifecycleObserver;
 import com.android.settings.gestures.GesturePreferenceController;
+import com.android.settings.R;
 
 public class AssistGestureWakePreferenceController extends GesturePreferenceController implements LifecycleObserver, OnPause, OnResume
 {

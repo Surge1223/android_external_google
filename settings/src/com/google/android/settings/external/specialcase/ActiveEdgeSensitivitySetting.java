@@ -14,6 +14,8 @@ import com.google.android.settings.gestures.assist.AssistGestureSensitivityPrefe
 import com.android.settings.overlay.FeatureFactory;
 import android.content.Context;
 import com.google.android.settings.external.Queryable;
+import com.android.settings.R;
+
 
 public class ActiveEdgeSensitivitySetting implements Queryable
 {
@@ -33,7 +35,7 @@ public class ActiveEdgeSensitivitySetting implements Queryable
     }
     
     private String getScreenTitle(final Context context) {
-        return context.getString(2131886441);
+        return context.getString(R.string.assist_gesture_title);
     }
     
     private String getSupportedValues(final Context context) {

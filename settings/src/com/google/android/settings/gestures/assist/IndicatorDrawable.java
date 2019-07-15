@@ -11,6 +11,7 @@ import android.graphics.Paint;
 import android.os.Handler;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import com.android.settings.R;
 
 class IndicatorDrawable extends Drawable
 {
