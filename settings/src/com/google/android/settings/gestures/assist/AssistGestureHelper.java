@@ -17,6 +17,7 @@ import com.google.android.systemui.elmyra.IElmyraServiceGestureListener;
 
 import static android.os.Binder.getCallingPid;
 import static android.os.Binder.getCallingUid;
+import com.android.settings.R;
 
 public class AssistGestureHelper {
     private boolean mBoundToService;
@@ -68,7 +69,7 @@ public class AssistGestureHelper {
                 if (mGestureListener != null) {
                     mGestureListener.onGestureProgress(f, i);
                 }
-                if (mLastStage != 2 && i == 2) {
+                if (mLastStage != 2 && mLastStage == 2) {
                     mPowerManager.userActivity(SystemClock.uptimeMillis(), 0, 0);
                 }
                 mLastStage = i;
