@@ -8,17 +8,17 @@ import android.os.RemoteException;
 
 public interface IElmyraService extends IInterface {
 
-    public static abstract class Stub extends Binder implements IElmyraService {
+    abstract class Stub extends Binder implements IElmyraService {
 
         private static class Proxy implements IElmyraService {
             private IBinder mRemote;
 
             Proxy(IBinder iBinder) {
-                this.mRemote = iBinder;
+                mRemote = iBinder;
             }
 
             public IBinder asBinder() {
-                return this.mRemote;
+                return mRemote;
             }
 
             public void registerGestureListener(IBinder iBinder, IBinder iBinder2) throws RemoteException {
@@ -27,7 +27,7 @@ public interface IElmyraService extends IInterface {
                     obtain.writeInterfaceToken("com.google.android.systemui.elmyra.IElmyraService");
                     obtain.writeStrongBinder(iBinder);
                     obtain.writeStrongBinder(iBinder2);
-                    this.mRemote.transact(1, obtain, null, 1);
+                    mRemote.transact(1, obtain, null, 1);
                 } finally {
                     obtain.recycle();
                 }
@@ -39,7 +39,7 @@ public interface IElmyraService extends IInterface {
                     obtain.writeInterfaceToken("com.google.android.systemui.elmyra.IElmyraService");
                     obtain.writeStrongBinder(iBinder);
                     obtain.writeStrongBinder(iBinder2);
-                    this.mRemote.transact(3, obtain, null, 1);
+                    mRemote.transact(3, obtain, null, 1);
                 } finally {
                     obtain.recycle();
                 }
@@ -49,7 +49,7 @@ public interface IElmyraService extends IInterface {
                 Parcel obtain = Parcel.obtain();
                 try {
                     obtain.writeInterfaceToken("com.google.android.systemui.elmyra.IElmyraService");
-                    this.mRemote.transact(2, obtain, null, 1);
+                    mRemote.transact(2, obtain, null, 1);
                 } finally {
                     obtain.recycle();
                 }
@@ -65,7 +65,8 @@ public interface IElmyraService extends IInterface {
                 return null;
             }
             IInterface queryLocalInterface = iBinder.queryLocalInterface("com.google.android.systemui.elmyra.IElmyraService");
-            return (queryLocalInterface == null || !(queryLocalInterface instanceof IElmyraService)) ? new Proxy(iBinder) : (IElmyraService) queryLocalInterface;
+            return (queryLocalInterface == null || !(queryLocalInterface instanceof IElmyraService)) ?
+                    new Proxy(iBinder) : (IElmyraService) queryLocalInterface;
         }
 
         public IBinder asBinder() {
@@ -73,7 +74,7 @@ public interface IElmyraService extends IInterface {
         }
 
         public boolean onTransact(int i, Parcel parcel, Parcel parcel2, int i2) throws RemoteException {
-            if (i != 1598968902) {
+            if (i != INTERFACE_TRANSACTION) {
                 switch (i) {
                     case 1:
                         parcel.enforceInterface("com.google.android.systemui.elmyra.IElmyraService");

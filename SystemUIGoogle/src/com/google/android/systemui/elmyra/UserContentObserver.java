@@ -8,23 +8,14 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.RemoteException;
 import android.util.Log;
+
 import java.util.function.Consumer;
 
 public class UserContentObserver extends ContentObserver {
-    private final Consumer<Uri> mCallback;
-    private final Context mContext;
-    private final Uri mSettingsUri;
-    private final SynchronousUserSwitchObserver mUserSwitchCallback;
-
-    class UserSwitchCallback extends SynchronousUserSwitchObserver {
-        UserSwitchCallback() {
-        }
-
-        public void onUserSwitching(int i) throws RemoteException {
-            updateContentObserver();
-            mCallback.accept(mSettingsUri);
-        }
-    }
+    public Consumer<Uri> mCallback;
+    private Context mContext;
+    private static Uri mSettingsUri = null;
+    private SynchronousUserSwitchObserver mUserSwitchCallback;
 
     public UserContentObserver(Context context, Uri uri, Consumer<Uri> consumer) {
         this(context, uri, consumer, true);
@@ -32,7 +23,12 @@ public class UserContentObserver extends ContentObserver {
 
     public UserContentObserver(Context context, Uri uri, Consumer<Uri> consumer, boolean enabled) {
         super(new Handler(context.getMainLooper()));
-        mUserSwitchCallback = new UserSwitchCallback();
+        mUserSwitchCallback = new SynchronousUserSwitchObserver() {
+            public void onUserSwitching(int i) throws RemoteException {
+                updateContentObserver();
+                mCallback.accept(UserContentObserver.mSettingsUri);
+            }
+        };
         mContext = context;
         mSettingsUri = uri;
         mCallback = consumer;
@@ -45,22 +41,30 @@ public class UserContentObserver extends ContentObserver {
         mContext.getContentResolver().unregisterContentObserver(this);
         mContext.getContentResolver().registerContentObserver(mSettingsUri, false, this, -2);
     }
-
     public void activate() {
         updateContentObserver();
         try {
             ActivityManager.getService().registerUserSwitchObserver(mUserSwitchCallback, "Elmyra/UserContentObserver");
-        } catch (Throwable suppressed) { /* do nothing */ }
+        } catch (RemoteException e) {
+            Log.e("Elmyra/UserContentObserver", "Failed to register user switch observer", e);
+        }
     }
 
     public void deactivate() {
-        this.mContext.getContentResolver().unregisterContentObserver(this);
+        mContext.getContentResolver().unregisterContentObserver(this);
         try {
             ActivityManager.getService().unregisterUserSwitchObserver(mUserSwitchCallback);
-        } catch (Throwable suppressed) { /* do nothing */ }
+        } catch (RemoteException e) {
+            Log.e("Elmyra/UserContentObserver", "Failed to unregister user switch observer", e);
+        }
     }
 
-    public void onChange(boolean selfChange, Uri uri) {
+    public void updateContentObserver() {
+        mContext.getContentResolver().unregisterContentObserver(this);
+        mContext.getContentResolver().registerContentObserver(mSettingsUri, false, this);
+    }
+
+    public void onChange(boolean enabled, Uri uri) {
         mCallback.accept(uri);
     }
 }

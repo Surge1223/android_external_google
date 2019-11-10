@@ -8,9 +8,10 @@ import android.os.RemoteException;
 
 public interface IElmyraServiceGestureListener extends IInterface {
 
-    public static abstract class Stub extends Binder implements IElmyraServiceGestureListener {
+    abstract class Stub extends Binder implements IElmyraServiceGestureListener {
 
         private static class Proxy implements IElmyraServiceGestureListener {
+            public static IElmyraServiceGestureListener sDefaultImpl;
             private IBinder mRemote;
 
             Proxy(IBinder iBinder) {
@@ -21,23 +22,31 @@ public interface IElmyraServiceGestureListener extends IInterface {
                 return this.mRemote;
             }
 
-            public void onGestureDetected() throws RemoteException {
+            public void onGestureProgress(float f, int i) throws RemoteException {
                 Parcel obtain = Parcel.obtain();
                 try {
-                    obtain.writeInterfaceToken("com.google.android.systemui.elmyra.IElmyraServiceGestureListener");
-                    this.mRemote.transact(2, obtain, null, 1);
+                    obtain.writeInterfaceToken("IElmyraServiceGestureListener");
+                    obtain.writeFloat(f);
+                    obtain.writeInt(i);
+                    if (this.mRemote.transact(1, obtain, null, 1) || Stub.getDefaultImpl() == null) {
+                        obtain.recycle();
+                    } else {
+                        Stub.getDefaultImpl().onGestureProgress(f, i);
+                    }
                 } finally {
                     obtain.recycle();
                 }
             }
 
-            public void onGestureProgress(float f, int i) throws RemoteException {
+            public void onGestureDetected() throws RemoteException {
                 Parcel obtain = Parcel.obtain();
                 try {
-                    obtain.writeInterfaceToken("com.google.android.systemui.elmyra.IElmyraServiceGestureListener");
-                    obtain.writeFloat(f);
-                    obtain.writeInt(i);
-                    this.mRemote.transact(1, obtain, null, 1);
+                    obtain.writeInterfaceToken("IElmyraServiceGestureListener");
+                    if (this.mRemote.transact(2, obtain, null, 1) || Stub.getDefaultImpl() == null) {
+                        obtain.recycle();
+                    } else {
+                        Stub.getDefaultImpl().onGestureDetected();
+                    }
                 } finally {
                     obtain.recycle();
                 }
@@ -48,27 +57,15 @@ public interface IElmyraServiceGestureListener extends IInterface {
             if (iBinder == null) {
                 return null;
             }
-            IInterface queryLocalInterface = iBinder.queryLocalInterface("com.google.android.systemui.elmyra.IElmyraServiceGestureListener");
-            return (queryLocalInterface == null || !(queryLocalInterface instanceof IElmyraServiceGestureListener)) ? new Proxy(iBinder) : (IElmyraServiceGestureListener) queryLocalInterface;
+            IInterface queryLocalInterface = iBinder.queryLocalInterface("IElmyraServiceGestureListener");
+            if (queryLocalInterface == null || !(queryLocalInterface instanceof IElmyraServiceGestureListener)) {
+                return new Proxy(iBinder);
+            }
+            return (IElmyraServiceGestureListener) queryLocalInterface;
         }
 
-        public boolean onTransact(int i, Parcel parcel, Parcel parcel2, int i2) throws RemoteException {
-            if (i != 1598968902) {
-                switch (i) {
-                    case 1:
-                        parcel.enforceInterface("com.google.android.systemui.elmyra.IElmyraServiceGestureListener");
-                        onGestureProgress(parcel.readFloat(), parcel.readInt());
-                        return true;
-                    case 2:
-                        parcel.enforceInterface("com.google.android.systemui.elmyra.IElmyraServiceGestureListener");
-                        onGestureDetected();
-                        return true;
-                    default:
-                        return super.onTransact(i, parcel, parcel2, i2);
-                }
-            }
-            parcel2.writeString("com.google.android.systemui.elmyra.IElmyraServiceGestureListener");
-            return true;
+        static IElmyraServiceGestureListener getDefaultImpl() {
+            return Proxy.sDefaultImpl;
         }
     }
 

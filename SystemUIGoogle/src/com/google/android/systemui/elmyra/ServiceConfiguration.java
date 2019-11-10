@@ -8,11 +8,19 @@ import java.util.Collections;
 import java.util.List;
 
 public interface ServiceConfiguration {
-    List<Action> getActions();
-    
-    List<FeedbackEffect> getFeedbackEffects();
+    GestureSensor getGestureSensor() {
+        return null;
+    }
 
-    List<Gate> getGates();
+    List<Action> getActions() {
+        return Collections.emptyList();
+    }
 
-    GestureSensor getGestureSensor();
+    List<FeedbackEffect> getFeedbackEffects() {
+        return Collections.emptyList();
+    }
+
+    List<Gate> getGates() {
+        return Collections.emptyList();
+    }
 }
